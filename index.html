@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161923;
+    --border: #252b38;
+    --accent: #f0b429;
+    --accent2: #4ecdc4;
+    --accent3: #ff6b6b;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --english: #4ecdc4;
+    --math: #f0b429;
+    --sc: #a78bfa;
+    --arabic: #34d399;
+    --egss: #fb7185;
+    --mfl: #60a5fa;
+    --is: #f97316;
+    --pe: #e879f9;
+    --art: #fb923c;
+    --religion: #fbbf24;
+    --pp: #a3e635;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(78,205,196,0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(240,180,41,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .school-name {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  h1 {
+    font-size: clamp(22px, 4vw, 36px);
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -1px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  /* Live Status Bar */
+  .status-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .status-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .status-card.next-session::before { background: var(--accent2); }
+  .status-card.next-break::before { background: var(--accent); }
+  .status-card.eod::before { background: var(--accent3); }
+
+  .status-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 6px;
+  }
+
+  .status-time {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .status-card.next-session .status-time { color: var(--accent2); }
+  .status-card.next-break .status-time { color: var(--accent); }
+  .status-card.eod .status-time { color: var(--accent3); }
+
+  .status-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Current Day Indicator */
+  .day-nav {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+
+  .day-btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .day-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .day-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+
+  .day-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-left: auto;
+    letter-spacing: 1px;
+  }
+
+  /* Schedule Grid */
+  .schedule {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .schedule-header {
+    display: grid;
+    grid-template-columns: 60px repeat(8, 1fr);
+    background: #111318;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .col-head {
+    padding: 10px 6px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    border-right: 1px solid var(--border);
+    line-height: 1.4;
+  }
+
+  .col-head:last-child { border-right: none; }
+  .col-head .period-num { color: var(--text); font-size: 12px; display: block; }
+
+  .schedule-row {
+    display: grid;
+    grid-template-columns: 60px repeat(8, 1fr);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .schedule-row:last-child { border-bottom: none; }
+  .schedule-row.today-row { background: rgba(240,180,41,0.03); }
+  .schedule-row.today-row .day-cell { background: rgba(240,180,41,0.08); }
+
+  .day-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    padding: 8px 0;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .today-row .day-cell { color: var(--accent); }
+
+  .period-cell {
+    padding: 8px 6px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 72px;
+    position: relative;
+    transition: background 0.2s;
+  }
+
+  .period-cell:last-child { border-right: none; }
+  .period-cell.empty { background: rgba(0,0,0,0.2); }
+
+  .period-cell.current-period {
+    background: rgba(255,255,255,0.06) !important;
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    z-index: 2;
+  }
+
+  .subject-tag {
+    display: inline-block;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+
+  .room {
+    font-size: 9px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Subject colors */
+  .s-english { background: rgba(78,205,196,0.15); color: var(--english); }
+  .s-math { background: rgba(240,180,41,0.15); color: var(--math); }
+  .s-sc { background: rgba(167,139,250,0.15); color: var(--sc); }
+  .s-arabic { background: rgba(52,211,153,0.15); color: var(--arabic); }
+  .s-egss { background: rgba(251,113,133,0.15); color: var(--egss); }
+  .s-mfl { background: rgba(96,165,250,0.15); color: var(--mfl); }
+  .s-is { background: rgba(249,115,22,0.15); color: var(--is); }
+  .s-pe { background: rgba(232,121,249,0.15); color: var(--pe); }
+  .s-art { background: rgba(251,146,60,0.15); color: var(--art); }
+  .s-religion { background: rgba(251,191,36,0.15); color: var(--religion); }
+  .s-pp { background: rgba(163,230,53,0.15); color: var(--pp); }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse 1.5s infinite;
+    position: absolute;
+    top: 6px; right: 6px;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  .live-clock {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 10px 18px;
+    background: #111318;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 0 0 16px 16px;
+  }
+
+  .live-clock .time-now {
+    font-weight: 700;
+    color: var(--accent2);
+    font-size: 15px;
+    margin-right: 4px;
+  }
+
+  .break-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: #111318;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+
+  .break-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    flex: 1;
+    padding-left: 60px;
+  }
+
+  .break-time {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+  }
+
+  @media (max-width: 700px) {
+    .status-bar { grid-template-columns: 1fr; }
+    .schedule-header, .schedule-row { grid-template-columns: 40px repeat(8, 1fr); }
+    .day-cell { font-size: 13px; }
+    .subject-tag { font-size: 8px; padding: 2px 4px; }
+    .period-cell { min-height: 58px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="school-name">Capital International Schools · 2025–2026</div>
+      <h1>Pre-IB <span>9</span> Schedule</h1>
+    </div>
+  </header>
+
+  <!-- Live Status -->
+  <div class="status-bar">
+    <div class="status-card next-session">
+      <div class="status-label">Next Session In</div>
+      <div class="status-time" id="next-session-countdown">--:--</div>
+      <div class="status-sub" id="next-session-name">—</div>
+    </div>
+    <div class="status-card next-break">
+      <div class="status-label">Next Break In</div>
+      <div class="status-time" id="next-break-countdown">--:--</div>
+      <div class="status-sub" id="next-break-name">—</div>
+    </div>
+    <div class="status-card eod">
+      <div class="status-label">End of Day In</div>
+      <div class="status-time" id="eod-countdown">--:--</div>
+      <div class="status-sub" id="eod-sub">School ends at 2:55 PM</div>
+    </div>
+  </div>
+
+  <!-- Day navigation -->
+  <div class="day-nav">
+    <button class="day-btn" data-day="0">Sun</button>
+    <button class="day-btn" data-day="1">Mon</button>
+    <button class="day-btn" data-day="2">Tue</button>
+    <button class="day-btn" data-day="3">Wed</button>
+    <button class="day-btn" data-day="4">Thu</button>
+    <span class="day-label" id="date-label">Today</span>
+  </div>
+
+  <!-- Schedule Table -->
+  <div class="schedule">
+    <div class="schedule-header">
+      <div class="col-head"></div>
+      <div class="col-head"><span class="period-num">1</span>8:00–8:45</div>
+      <div class="col-head"><span class="period-num">2</span>8:45–9:30</div>
+      <div class="col-head"><span class="period-num">3</span>9:40–10:25</div>
+      <div class="col-head"><span class="period-num">4</span>10:25–11:10</div>
+      <div class="col-head"><span class="period-num">5</span>11:10–11:55</div>
+      <div class="col-head"><span class="period-num">6</span>12:40–1:25</div>
+      <div class="col-head"><span class="period-num">7</span>1:25–2:10</div>
+      <div class="col-head"><span class="period-num">8</span>2:10–2:55</div>
+    </div>
+    <div id="schedule-body"></div>
+    <div class="live-clock">
+      <span>Now:</span>
+      <span class="time-now" id="live-time">--:--:--</span>
+      <span id="current-status">Loading...</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// Schedule data — days: 0=Sun,1=Mon,2=Tue,3=Wed,4=Thu
+const DAYS = ['Su','Mo','Tu','We','Th'];
+const DAY_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday'];
+
+// Periods: [start_h, start_m, end_h, end_m]
+const PERIODS = [
+  [8,0,8,45],
+  [8,45,9,30],
+  [9,40,10,25],
+  [10,25,11,10],
+  [11,10,11,55],
+  [12,40,13,25],
+  [13,25,14,10],
+  [14,10,14,55]
+];
+
+const BREAKS = [
+  {label:'Short Break', start:[9,30], end:[9,40]},
+  {label:'Lunch Break', start:[11,55], end:[12,40]}
+];
+
+// Subject definitions
+const S = (name, cls, room='A12') => ({name, cls, room});
+
+const SCHEDULE = {
+  0: [ // Sunday
+    S('English','s-english'), S('Math','s-math'),
+    S('SC','s-sc'), S('SC','s-sc'),
+    S('IS','s-is'), S('PE','s-pe'),
+    S('Arabic','s-arabic'), S('EGSS','s-egss')
+  ],
+  1: [ // Monday
+    S('Math','s-math'), S('Math','s-math'),
+    S('MFL','s-mfl','228/A12/213'), S('SC','s-sc'),
+    S('EGSS','s-egss'), S('English','s-english'),
+    S('English','s-english'), S('Arabic','s-arabic')
+  ],
+  2: [ // Tuesday
+    S('English','s-english'), S('English','s-english'),
+    S('Math','s-math'), S('Arabic','s-arabic'),
+    S('MFL','s-mfl','228/A12/213'), S('SC','s-sc'),
+    S('EGSS','s-egss'), S('Religion','s-religion')
+  ],
+  3: [ // Wednesday
+    S('English','s-english'), S('English','s-english'),
+    S('Math','s-math'), S('SC','s-sc'),
+    S('Arabic','s-arabic'), S('IS','s-is'),
+    S('MFL','s-mfl','228/A12/213'), S('Art','s-art','Art3')
+  ],
+  4: [ // Thursday
+    S('Math','s-math'), S('MFL','s-mfl','228/A12/213'),
+    S('Arabic','s-arabic'), S('English','s-english'),
+    S('EGSS','s-egss'), S('IS','s-is'),
+    S('PP','s-pp','A21'), S('Religion','s-religion')
+  ]
+};
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function toMins(h,m){ return h*60+m; }
+
+function fmtCountdown(totalSecs){
+  if(totalSecs <= 0) return '00:00';
+  const h = Math.floor(totalSecs/3600);
+  const m = Math.floor((totalSecs%3600)/60);
+  const s = totalSecs%60;
+  if(h>0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  return `${pad(m)}:${pad(s)}`;
+}
+
+function getNow(){
+  const now = new Date();
+  return { h: now.getHours(), m: now.getMinutes(), s: now.getSeconds(),
+           totalSecs: now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds(),
+           day: now.getDay() // 0=Sun,1=Mon...6=Sat
+  };
+}
+
+// Map JS day (0=Sun) to our schedule day index
+function jsDay2SchDay(jsDay){
+  // Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6
+  if(jsDay <= 4) return jsDay; // Sun-Thu
+  return null; // Fri/Sat = no school
+}
+
+let viewDay = null; // null = today
+
+function getSchDay(){
+  const {day} = getNow();
+  const sd = jsDay2SchDay(day);
+  return sd !== null ? sd : 0;
+}
+
+function renderSchedule(dayIdx){
+  const body = document.getElementById('schedule-body');
+  body.innerHTML = '';
+
+  DAYS.forEach((d, di) => {
+    const isToday = di === getSchDay();
+    const isView = di === dayIdx;
+
+    // Short break row before period 3
+    if(di === 0){
+      const br1 = document.createElement('div');
+      br1.className = 'break-row';
+      br1.innerHTML = `<div class="break-label">SHORT BREAK</div><div class="break-time">9:30 – 9:40</div>`;
+      // We'll insert breaks between rows using a different approach
+    }
+
+    const row = document.createElement('div');
+    row.className = 'schedule-row' + (isToday ? ' today-row' : '');
+    row.dataset.day = di;
+
+    const dc = document.createElement('div');
+    dc.className = 'day-cell';
+    dc.textContent = d;
+    row.appendChild(dc);
+
+    const dayData = SCHEDULE[di];
+    dayData.forEach((subj, pi) => {
+      const cell = document.createElement('div');
+      cell.className = 'period-cell';
+      cell.dataset.period = pi;
+      cell.dataset.day = di;
+
+      const tag = document.createElement('span');
+      tag.className = 'subject-tag ' + subj.cls;
+      tag.textContent = subj.name;
+      cell.appendChild(tag);
+
+      const rm = document.createElement('div');
+      rm.className = 'room';
+      rm.textContent = subj.room;
+      cell.appendChild(rm);
+
+      row.appendChild(cell);
+    });
+
+    body.appendChild(row);
+
+    // Insert break dividers
+    if(di === 4){ // after last row, nothing
+    }
+  });
+
+  // Insert break rows
+  const rows = body.querySelectorAll('.schedule-row');
+  const br1 = createBreakRow('SHORT BREAK','9:30 – 9:40');
+  const br2 = createBreakRow('LUNCH BREAK','11:55 – 12:40');
+  // Insert before all rows (they show once as time markers)
+  // Actually let's put breaks as visual separators between period 2 and 3, 5 and 6
+  // We'll add them as overlays in the header instead — simpler: just shown in clock area
+  // For now leave as is
+}
+
+function createBreakRow(label, time){
+  const br = document.createElement('div');
+  br.className = 'break-row';
+  br.innerHTML = `<div class="break-label">${label}</div><div class="break-time">${time}</div>`;
+  return br;
+}
+
+function highlightCurrent(){
+  const {totalSecs, day} = getNow();
+  const sDay = jsDay2SchDay(day);
+
+  document.querySelectorAll('.period-cell').forEach(c => c.classList.remove('current-period'));
+  document.querySelectorAll('.live-dot').forEach(d => d.remove());
+
+  if(sDay === null) return;
+
+  PERIODS.forEach(([sh,sm,eh,em], pi) => {
+    const start = toMins(sh,sm)*60;
+    const end = toMins(eh,em)*60;
+    if(totalSecs >= start && totalSecs < end){
+      const cell = document.querySelector(`.period-cell[data-day="${sDay}"][data-period="${pi}"]`);
+      if(cell){
+        cell.classList.add('current-period');
+        const dot = document.createElement('div');
+        dot.className = 'live-dot';
+        cell.appendChild(dot);
+      }
+    }
+  });
+}
+
+function updateCountdowns(){
+  const now = getNow();
+  const {totalSecs, day, h, m, s} = now;
+  const sDay = jsDay2SchDay(day);
+
+  // Live clock
+  document.getElementById('live-time').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+
+  // EOD = 14:55 = 14*3600+55*60
+  const eodSecs = 14*3600 + 55*60;
+  const eodLeft = eodSecs - totalSecs;
+  if(eodLeft > 0 && sDay !== null){
+    document.getElementById('eod-countdown').textContent = fmtCountdown(eodLeft);
+    document.getElementById('eod-sub').textContent = 'School ends at 2:55 PM';
+  } else {
+    document.getElementById('eod-countdown').textContent = sDay === null ? 'Weekend!' : 'Done!';
+    document.getElementById('eod-sub').textContent = sDay === null ? 'No school today' : 'See you tomorrow';
+  }
+
+  if(sDay === null){
+    document.getElementById('next-session-countdown').textContent = '—';
+    document.getElementById('next-session-name').textContent = 'No school today';
+    document.getElementById('next-break-countdown').textContent = '—';
+    document.getElementById('next-break-name').textContent = 'Enjoy your day';
+    document.getElementById('current-status').textContent = 'Weekend — no schedule';
+    return;
+  }
+
+  const dayData = SCHEDULE[sDay];
+
+  // Find current period
+  let inPeriod = null;
+  for(let pi=0; pi<PERIODS.length; pi++){
+    const [sh,sm,eh,em] = PERIODS[pi];
+    const start = toMins(sh,sm)*60;
+    const end = toMins(eh,em)*60;
+    if(totalSecs >= start && totalSecs < end){ inPeriod = pi; break; }
+  }
+
+  // Find current break
+  let inBreak = null;
+  for(let bi=0; bi<BREAKS.length; bi++){
+    const bs = toMins(...BREAKS[bi].start)*60;
+    const be = toMins(...BREAKS[bi].end)*60;
+    if(totalSecs >= bs && totalSecs < be){ inBreak = bi; break; }
+  }
+
+  // Current status text
+  if(inPeriod !== null){
+    const subj = dayData[inPeriod];
+    const [,, eh, em] = PERIODS[inPeriod];
+    const endSecs = toMins(eh,em)*60;
+    const left = endSecs - totalSecs;
+    document.getElementById('current-status').textContent = `In ${subj.name} — ${fmtCountdown(left)} remaining`;
+  } else if(inBreak !== null){
+    const br = BREAKS[inBreak];
+    const be = toMins(...br.end)*60;
+    const left = be - totalSecs;
+    document.getElementById('current-status').textContent = `${br.label} — ${fmtCountdown(left)} remaining`;
+  } else if(totalSecs < toMins(8,0)*60){
+    document.getElementById('current-status').textContent = 'School hasn\'t started yet';
+  } else {
+    document.getElementById('current-status').textContent = 'Between sessions';
+  }
+
+  // Next session
+  let nextPeriod = null;
+  let nextPeriodStart = null;
+  for(let pi=0; pi<PERIODS.length; pi++){
+    const [sh,sm] = PERIODS[pi];
+    const start = toMins(sh,sm)*60;
+    if(start > totalSecs){ nextPeriod = pi; nextPeriodStart = start; break; }
+    // if currently in period, next session is the one after
+    const [,, eh, em] = PERIODS[pi];
+    if(totalSecs < toMins(eh,em)*60 && inPeriod === pi){
+      // check if next period exists
+      if(pi+1 < PERIODS.length){ nextPeriod = pi+1; nextPeriodStart = toMins(PERIODS[pi+1][0],PERIODS[pi+1][1])*60; break; }
+    }
+  }
+
+  if(nextPeriod !== null && nextPeriodStart > totalSecs){
+    const left = nextPeriodStart - totalSecs;
+    document.getElementById('next-session-countdown').textContent = fmtCountdown(left);
+    document.getElementById('next-session-name').textContent = `P${nextPeriod+1}: ${dayData[nextPeriod].name}`;
+  } else {
+    document.getElementById('next-session-countdown').textContent = 'Done';
+    document.getElementById('next-session-name').textContent = 'No more sessions';
+  }
+
+  // All break events
+  const allBreaks = [
+    {label:'Short Break', startSecs: toMins(9,30)*60},
+    {label:'Lunch Break', startSecs: toMins(11,55)*60}
+  ];
+
+  let nextBreak = null;
+  for(const br of allBreaks){
+    if(br.startSecs > totalSecs){ nextBreak = br; break; }
+  }
+
+  if(nextBreak){
+    const left = nextBreak.startSecs - totalSecs;
+    document.getElementById('next-break-countdown').textContent = fmtCountdown(left);
+    document.getElementById('next-break-name').textContent = nextBreak.label;
+  } else {
+    document.getElementById('next-break-countdown').textContent = 'Done';
+    document.getElementById('next-break-name').textContent = 'No more breaks';
+  }
+}
+
+function setDayButtons(activeDay){
+  document.querySelectorAll('.day-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.day) === activeDay);
+  });
+  const now = new Date();
+  const label = document.getElementById('date-label');
+  const sDay = jsDay2SchDay(now.getDay());
+  if(activeDay === sDay && sDay !== null){
+    label.textContent = 'Today';
+  } else {
+    label.textContent = DAY_FULL[activeDay];
+  }
+}
+
+function init(){
+  const sDay = getSchDay();
+  viewDay = sDay;
+  renderSchedule(viewDay);
+  setDayButtons(viewDay);
+  highlightCurrent();
+  updateCountdowns();
+
+  document.querySelectorAll('.day-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      viewDay = parseInt(btn.dataset.day);
+      setDayButtons(viewDay);
+      // No need to re-render whole schedule, just update active visual
+    });
+  });
+
+  setInterval(() => {
+    updateCountdowns();
+    highlightCurrent();
+  }, 1000);
+}
+
+init();
+</script>
+</body>
+</html>
